@@ -44,14 +44,53 @@ let persons = [
       }
 ]
 
+
+let pbLength = persons.length
+let curDate = new Date()
+
+
+/*----------------------------------------GET Section----------------------------------------*/
+
+
+//Mitä index.js:n kautta näkyy
 app.get('/', (req, res) => {
-    res.send('<h1>Hello World!</h1>')
+    res.send('<h1>Hello, this is a phonebook!</h1>')
+  })
+
+
+  //Antaa infon
+  app.get('/info', (req, res) => {
+    res.send(`<div>
+        <h2>The phonebook has ${pbLength} persons info</h2>
+        <h3>${curDate}</h3>
+        </div>`)
   })
   
+
+  //Antaa kaikki henkilöt
   app.get('/api/persons', (req, res) => {
     res.json(persons)
   })
+
+
+  //Yksittäisen näyttö
+  app.get('/api/persons/:id', (request, response) => {
+    const id = Number(request.params.id)
+    const person = persons.find(person => person.id === id)
+    
+    if (person) {
+        response.json(person)
+        console.log('Löytyi!') //Näyyy cmd:ssä
+      } else {
+        response.status(404).end()
+        console.log('Ei löytynyt!') //Näyyy cmd:ssä
+      }
+  })
+
+
+/*----------------------------------------PORT Section---------------------------------------*/
   
+
   const PORT = 3001
   app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`)
