@@ -104,13 +104,37 @@ app.delete('/api/persons/:id', (request, response) => {
 
 app.post('/api/persons', (request, response) => {
     
+
     const body = request.body
+
+
+    if(!body.name) {
+        return response.status(400).json({
+            error:'Name is missing'
+        })
+    }
+
+
+    if(!body.number) {
+        return response.status(400).json({
+            error:'Number is missing'
+        })
+    }
+    
+
+    if(persons.map(person => person.name === body.name)) {
+        return response.status(400).json({
+            error:'Given name is already in the phonebook, try another name'
+        })
+    }
+    
 
     //Luo uuden id:n lisättävälle jannulle käyttäen min ja maxia välinä
     const generateId= () => {                       
-    const newId = Math.round(Math.random() * (1000 - 1) + 1)
+    const newId = Math.round(Math.random() * (1000 - 10) + 10)
     return newId
     }   
+
 
     const person = {
         name: body.name,
@@ -118,7 +142,9 @@ app.post('/api/persons', (request, response) => {
         id: generateId()
     }
 
+    
     persons = persons.concat(person)
+
 
     console.log(person)
     response.json(person)
