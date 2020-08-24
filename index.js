@@ -1,9 +1,11 @@
 const express = require('express')
 var morgan = require('morgan')
+const { request } = require('express')
 const app = express()
 
-app.use(express.json()) 
-app.use(morgan('tiny'))
+
+app.use(express.json())
+
 
 let persons = [
     {
@@ -51,6 +53,23 @@ let persons = [
 
 let pbLength = persons.length
 let curDate = new Date()
+
+
+/*---------------------------------------MORGAN Section--------------------------------------*/
+
+
+morgan.token('type', (request, response) => {
+  if (request.method === "POST"){
+    var vastaus = JSON.stringify(request.body)
+    return vastaus
+  } else {
+    return console.log('Ei käytetty POSTia')
+  }
+})
+
+ 
+//app.use(morgan('tiny'))
+app.use( morgan(':method :url :status :res[content-length] - :response-time ms :type'))
 
 
 /*----------------------------------------GET Section----------------------------------------*/
@@ -124,7 +143,7 @@ app.post('/api/persons', (request, response) => {
     }
     
 
-    if(persons.map(person => person.name === body.name)) {
+    if(persons.some(person => person.name === body.name)) {
         return response.status(400).json({
             error:'Given name is already in the phonebook, try another name'
         })
