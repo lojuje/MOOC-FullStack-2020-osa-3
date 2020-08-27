@@ -1,5 +1,6 @@
+require('dotenv').config()
 const express = require('express')
-var morgan = require('morgan')
+const morgan = require('morgan')
 const { request } = require('express')
 const app = express()
 const cors = require('cors')
@@ -8,7 +9,9 @@ const cors = require('cors')
 app.use(express.json())
 app.use(cors())
 app.use(express.static('build'))
+const Person = require('./models/personMongoDB')
 
+/*
 let persons = [
     {
         "name": "Arto Hellas",
@@ -55,6 +58,7 @@ let persons = [
 
 let pbLength = persons.length
 let curDate = new Date()
+*/
 
 
 /*---------------------------------------MORGAN Section--------------------------------------*/
@@ -78,24 +82,27 @@ app.use( morgan(':method :url :status :res[content-length] - :response-time ms :
 
 
 //Mitä index.js:n kautta näkyy
-app.get('/', (req, res) => {
+app.get('/', (request, response) => {
     res.send('<h1>Hello, this is a phonebook!</h1>')
   })
 
 
   //Antaa infon
+  /*
   app.get('/info', (req, res) => {
     res.send(`<div>
         <h2>The phonebook has ${pbLength} persons info</h2>
         <h3>${curDate}</h3>
         </div>`)
-  })
+  })*/
   
 
   //Antaa kaikki henkilöt
-  app.get('/api/persons', (req, res) => {
-    res.json(persons)
+  app.get('/api/persons', (request, response) => {
+    Person.find({}).then(persons => {
+      response.json(persons.map(person => person.toJSON()))
   })
+})
 
 
   //Yksittäisen näyttö
@@ -131,7 +138,7 @@ app.post('/api/persons', (request, response) => {
     const body = request.body
 
 
-    if(!body.name) {
+    if(body.name === undefined) {
         return response.status(400).json({
             error:'Name is missing'
         })
@@ -144,33 +151,37 @@ app.post('/api/persons', (request, response) => {
         })
     }
     
-
+    /*
     if(persons.some(person => person.name === body.name)) {
         return response.status(400).json({
             error:'Given name is already in the phonebook, try another name'
         })
     }
-    
+    */
 
     //Luo uuden id:n lisättävälle jannulle käyttäen min ja maxia välinä
+    /*
     const generateId= () => {                       
     const newId = Math.round(Math.random() * (1000 - 10) + 10)
     return newId
-    }   
+    }
+    */
 
 
-    const person = {
+    const person = Person({
         name: body.name,
         number: body.number,
-        id: generateId()
-    }
+       // id: generateId()
+    })
+
+    person.save().then(saved => {
+      response.json(saved.toJSON())
+    })
 
     
-    persons = persons.concat(person)
-
-
+    //persons = persons.concat(person)
     console.log(person)
-    response.json(person)
+    //response.json(person)
   })
 
 
