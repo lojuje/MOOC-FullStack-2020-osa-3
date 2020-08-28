@@ -11,54 +11,8 @@ app.use(cors())
 app.use(express.static('build'))
 const Person = require('./models/personMongoDB')
 
-/*
-let persons = [
-    {
-        "name": "Arto Hellas",
-        "number": " 040-4005134",
-        "id": 1
-      },
-      {
-        "name": "Ada Lovelace",
-        "number": "39-44-5323523",
-        "id": 2
-      },
-      {
-        "name": "Dan Abramov",
-        "number": "12-43-234345",
-        "id": 3
-      },
-      {
-        "name": "Mary Poppendieck",
-        "number": "39-23-6423122",
-        "id": 4
-      },
-      {
-        "name": "Antti Isotalo",
-        "number": "+358-407009900",
-        "id": 5
-      },
-      {
-        "name": "Jaana Kemppainen",
-        "number": "050-5210421",
-        "id": 6
-      },
-      {
-        "name": "Donald Fauntleroy  Duck",
-        "number": "313-3133133",
-        "id": 7
-      },
-      {
-        "name": "Roope Ankka",
-        "number": "055-6790321",
-        "id": 8
-      }
-]
 
-
-let pbLength = persons.length
-let curDate = new Date()
-*/
+var curDate = new Date()
 
 
 /*---------------------------------------MORGAN Section--------------------------------------*/
@@ -88,13 +42,13 @@ app.get('/', (request, response) => {
 
 
   //Antaa infon
-  /*
-  app.get('/info', (req, res) => {
-    res.send(`<div>
-        <h2>The phonebook has ${pbLength} persons info</h2>
-        <h3>${curDate}</h3>
-        </div>`)
-  })*/
+  app.get('/info', (request, response) => {
+    Person.find({}).then(result => {
+      response.send(`<div>
+      <h2>The phonebook has ${result.map(person => person.toJSON()).length} persons info</h2>
+      <h3>${curDate}</h3>
+      </div>`)})
+  })
   
 
   //Antaa kaikki henkilöt
@@ -135,34 +89,52 @@ app.delete('/api/persons/:id', (request, response, next) => {
   })
 
 
-/*----------------------------------------POST Section---------------------------------------*/
+/*----------------------------------------POST JA PUT Section---------------------------------------*/
 
 app.post('/api/persons', (request, response, next) => {
     
-    const body = request.body
+  const body = request.body
 
-    if(body.name === undefined) {
-      return response.status(400).json({
-          error:'Name is missing'
-      })
-     }
-    if(!body.number) {
-      return response.status(400).json({
-          error:'Number is missing'
-      })
-    }
-    
-    const person = Person({
-        name: body.name,
-        number: body.number,
+  if(body.name === undefined) {
+    return response.status(400).json({
+        error:'Name is missing'
     })
-
-    person.save().then(saved => {
-      response.json(saved.toJSON())
+   }
+  if(!body.number) {
+    return response.status(400).json({
+        error:'Number is missing'
     })
-    .catch(error => next(error))
-
+  }
+  
+  const person = Person({
+      name: body.name,
+      number: body.number,
   })
+
+  person.save().then(saved => {
+    response.json(saved.toJSON())
+  })
+  .catch(error => next(error))
+})
+
+
+//lisätty put, koska tein 2.18 osion postilla
+app.put('/api/persons/:id', (request, response, next) => {
+
+const body = request.body
+
+const person = {
+  name:body.name,
+  number: body.number
+}
+
+Person.findByIdAndUpdate(request.params.id, person, {new : true })
+.then(updated => {
+  response.json(updated.toJSON())
+  console.log("Päivitys onnistui!")
+})
+.catch(error => next(error))
+})
 
 
 /*----------------------------------------ERROR JA ENDPOINT Section---------------------------------------*/  
