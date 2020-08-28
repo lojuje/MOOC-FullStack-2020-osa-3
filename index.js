@@ -98,98 +98,100 @@ app.get('/', (request, response) => {
   
 
   //Antaa kaikki henkilöt
-  app.get('/api/persons', (request, response) => {
+  app.get('/api/persons', (request, response, next) => {
     Person.find({}).then(persons => {
       response.json(persons.map(person => person.toJSON()))
   })
+  .catch(error => next(error))
 })
 
 
   //Yksittäisen näyttö
-  app.get('/api/persons/:id', (request, response) => {
-    const id = Number(request.params.id)
-    const person = persons.find(person => person.id === id)
-    
-    if (person) {
-        response.json(person)
-        console.log('Löytyi!') //Näyyy cmd:ssä
+  app.get('/api/persons/:id', (request, response, next) => {
+
+    Person.findById(request.params.id)
+    .then(person => {
+      if (person) {
+        response.json(person.toJSON())
+        console.log("Löytyi!")
       } else {
         response.status(404).end()
-        console.log('Ei löytynyt!') //Näyyy cmd:ssä
+        console.log("Ei löytynyt!")
       }
+    })
+    .catch(error => next(error))
   })
 
 
 /*--------------------------------------DELETE Section-------------------------------------*/
 
-app.delete('/api/persons/:id', (request, response) => {
-    const id = Number(request.params.id)
-    persons = persons.filter(person => person.id !== id)
-    response.status(204).end()
-    console.log('Poisto onnistui!')
+app.delete('/api/persons/:id', (request, response, next) => {
+  Person.findByIdAndRemove(request.params.id)
+    .then(result => {
+      response.status(204).end()
+      console.log('Poisto onnistui!')
+    })
+    .catch(error => next(error))
   })
 
 
 /*----------------------------------------POST Section---------------------------------------*/
 
-app.post('/api/persons', (request, response) => {
+app.post('/api/persons', (request, response, next) => {
     
-
     const body = request.body
 
-
     if(body.name === undefined) {
-        return response.status(400).json({
-            error:'Name is missing'
-        })
-    }
-
-
+      return response.status(400).json({
+          error:'Name is missing'
+      })
+     }
     if(!body.number) {
-        return response.status(400).json({
-            error:'Number is missing'
-        })
+      return response.status(400).json({
+          error:'Number is missing'
+      })
     }
     
-    /*
-    if(persons.some(person => person.name === body.name)) {
-        return response.status(400).json({
-            error:'Given name is already in the phonebook, try another name'
-        })
-    }
-    */
-
-    //Luo uuden id:n lisättävälle jannulle käyttäen min ja maxia välinä
-    /*
-    const generateId= () => {                       
-    const newId = Math.round(Math.random() * (1000 - 10) + 10)
-    return newId
-    }
-    */
-
-
     const person = Person({
         name: body.name,
         number: body.number,
-       // id: generateId()
     })
 
     person.save().then(saved => {
       response.json(saved.toJSON())
     })
+    .catch(error => next(error))
 
-    
-    //persons = persons.concat(person)
-    console.log(person)
-    //response.json(person)
   })
+
+
+/*----------------------------------------ERROR JA ENDPOINT Section---------------------------------------*/  
+
+const unknownEndpoint = (request, response) => {
+  response.status(404).send({ error: 'unknown endpoint' })
+}
+
+// olemattomien osoitteiden käsittely
+app.use(unknownEndpoint)
+
+const errorHandler = (error, request, response, next) => {
+  console.error(error.message)
+
+  if (error.name === 'CastError') {
+    return response.status(400).send({ error: 'malformatted id' })
+  }
+
+  next(error)
+}
+
+// virheellisten pyyntöjen käsittely
+app.use(errorHandler)
 
 
 /*----------------------------------------PORT Section---------------------------------------*/
   
 
-const PORT = process.env.PORT || 3001
+const PORT = process.env.PORT
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`)
-  
+    console.log(`Server running on port ${PORT}`)
 })
