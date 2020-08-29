@@ -9,7 +9,7 @@ const cors = require('cors')
 app.use(express.json())
 app.use(cors())
 app.use(express.static('build'))
-const Person = require('./models/personMongoDB')
+const Person = require('./models/PersonMongoDB')
 
 
 var curDate = new Date()
@@ -106,19 +106,21 @@ app.post('/api/persons', (request, response, next) => {
     })
   }
   
-  const person = Person({
+  const person = new Person({
       name: body.name,
       number: body.number,
   })
 
-  person.save().then(saved => {
-    response.json(saved.toJSON())
-  })
+  person.save()
+        .then(saved => saved.toJSON())
+        .then(savedAndFormatted => {
+          response.json(savedAndFormatted)
+        })
   .catch(error => next(error))
 })
 
 
-//lisätty put, koska tein 2.18 osion postilla
+
 app.put('/api/persons/:id', (request, response, next) => {
 
 const body = request.body
@@ -151,7 +153,9 @@ const errorHandler = (error, request, response, next) => {
 
   if (error.name === 'CastError') {
     return response.status(400).send({ error: 'malformatted id' })
-  }
+  } else if (error.name === 'ValidationError') {
+    return response.status(400).json({ error: error.message })
+}
 
   next(error)
 }
