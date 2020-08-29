@@ -9,7 +9,7 @@ const cors = require('cors')
 app.use(express.json())
 app.use(cors())
 app.use(express.static('build'))
-const Person = require('./models/PersonMongoDB')
+const Person = require('./models/Person')
 
 
 var curDate = new Date()
